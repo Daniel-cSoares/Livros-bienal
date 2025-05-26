@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR" x-data="bookApp()" x-init="init()">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lista de Livros</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Todo o estilo permanece igual ao que você já forneceu */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 1rem;
+      background: #f0f0f0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .search-filter {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .search-filter input[type="search"] {
+      flex: 1;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    .search-filter > div button {
+      margin-left: 0.25rem;
+      padding: 0.5rem 0.75rem;
+      border: none;
+      background: #909db9;
+      cursor: pointer;
+      border-radius: 4px;
+    } 
+    .search-filter > div button.active {
+      background: #3b82f6;
+      color: white;
+    }
+    .book-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto;
+      max-width: 700px;
+    }
+    .book-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      background: white;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+    }
+    .book-cover {
+      width: 60px;
+      height: 90px;
+      object-fit: contain;
+      border: 1px solid #ccc;
+      background-color: #fafafa;
+      cursor: pointer;
+    }
+    .book-cover-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .book-cover-container button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      padding: 0;
+      background-color: #657488;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      line-height: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .book-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .form-add-price {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .form-add-price input[type="number"] {
+      flex: 1;
+      padding: 0.25rem 0.5rem;
+      font-size: 1rem;
+    }
+    .form-add-price input.store-input {
+      flex: 2;
+      padding: 0.25rem 0.5rem;
+      font-size: 1rem;
+    }
+    details summary {
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 0.5rem;
+      font-weight: 600;
+    }
+    details ul {
+      margin: 0.25rem 0 0 1rem;
+      padding: 0;
+      font-size: 0.85rem;
+      list-style: disc;
+      color: #333;
+    }
+    .bought {
+      color: green;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    .notBought {
+      color: red;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    .book-actions {
+      display: flex;
+      flex-direction: row;
+      gap: 0.5rem;
+    }
+    .book-actions button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #6e6d6d;
+      border: none;
+      cursor: pointer;
+    }
+    .book-actions button[title="Marcar como comprado"] {
+      background-color: #22c55e;
+      color: white;
+    }
+    .book-actions button[title="Excluir"] {
+      background-color: #ef4444;
+      color: white;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .modal-content {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .cover-option {
+      display: flex;
+      gap: 1rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.5rem;
+    }
+    .cover-option img {
+      width: 50px;
+      height: 75px;
+      object-fit: contain;
+      border: 1px solid #ccc;
+    }
+    .modal-close {
+      cursor: pointer;
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.8rem;
+      border-radius: 5px;
+      font-weight: bold;
+      position: absolute;
+      right: 1rem;
+      top: 1rem;
+    }
+    nav.bottom-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      z-index: 10;
+    }
+    nav.bottom-menu a {
+      text-decoration: none;
+      color: #333;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+    }
+    nav.bottom-menu a.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<main class="container" style="max-width: 800px; margin: auto;">
+  <h1>Lista de Livros</h1>
+
+  <div class="search-filter">
+    <input type="search" placeholder="Buscar livro..." x-model="searchQuery" />
+    <div>
+      <button :class="{ 'active': filter === 'all' }" @click="filter = 'all'">Todos</button>
+      <button :class="{ 'active': filter === 'bought' }" @click="filter = 'bought'">Comprados</button>
+      <button :class="{ 'active': filter === 'notBought' }" @click="filter = 'notBought'">Não Comprados</button>
+    </div>
+  </div>
+
+  <p x-text="`Total de livros: ${filteredBooks.length}`"></p>
+
+  <ul class="book-list">
+    <template x-for="(book, index) in filteredBooks" :key="index">
+      <li class="book-item">
+        <div class="book-cover-container">
+          <img class="book-cover"
+               :src="book.cover || 'https://via.placeholder.com/60x90?text=Sem+Capa'"
+               @click="openCoverModal(index)"
+               title="Clique para escolher capa"
+          />
+          <button @click="addPrice(index, newPrices[index], newStores[index])">+</button>
+        </div>
+        <div class="book-info">
+          <strong x-text="book.title"></strong>
+          <div x-text="book.author ? 'Autor: ' + book.author : ''"></div>
+          <template x-if="getLowestPrice(book)">
+            <div>
+              Preço: R$ <span x-text="getLowestPrice(book).price.toFixed(2)"></span> - 
+              <span x-text="getLowestPrice(book).store"></span>
+            </div>
+          </template>
+          <form class="form-add-price" @submit.prevent="addPrice(index, newPrices[index], newStores[index])">
+            <input type="number" x-model.number="newPrices[index]" placeholder="Preço" min="0.01" step="0.01" required />
+            <input type="text" x-model="newStores[index]" placeholder="Loja" required />
+          </form>
+          <template x-if="book.prices.length > 1">
+            <details>
+              <summary>Mostrar outros preços</summary>
+              <ul>
+                <template x-for="price in book.prices">
+                  <li x-text="`R$ ${parseFloat(price.price).toFixed(2)} - ${price.store}`"></li>
+                </template>
+              </ul>
+            </details>
+          </template>
+          <div :class="book.bought ? 'bought' : 'notBought'" x-text="book.bought ? '✔️ Comprado' : '❌ Não comprado'"></div>
+          <div class="book-actions">
+            <button @click="editTitle(index)" title="Editar">📕</button>
+            <button @click="toggleBought(index)" title="Marcar como comprado">✔️</button>
+            <button @click="deleteBook(index)" title="Excluir">🗑️</button>
+          </div>
+        </div>
+        
+      </li>
+    </template>
+  </ul>
+</main>
+
+<div x-show="coverModalOpen" class="modal-overlay" @click.self="coverModalOpen = false" x-trap.noscroll="coverModalOpen">
+  <div class="modal-content" @keydown.escape.window="coverModalOpen = false">
+    <button class="modal-close" @click="coverModalOpen = false">X Fechar</button>
+    <template x-if="coverOptions.length === 0">
+      <p>Nenhuma capa encontrada para <strong x-text="currentBookTitle"></strong>.</p>
+    </template>
+    <template x-for="option in coverOptions">
+      <div class="cover-option" @click="selectCover(option)">
+        <img :src="option.thumbnail" alt="Capa" />
+        <div>
+          <strong x-text="option.title"></strong>
+          <small x-text="option.authors ? option.authors.join(', ') : 'Autor desconhecido'"></small>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+
+<nav class="bottom-menu">
+  <a href="index.html">Adicionar</a>
+  <a href="list.html" class="active">Lista</a>
+</nav>
+
+<script>
+  function bookApp() {
+    return {
+      books: [],
+      searchQuery: '',
+      filter: 'all',
+      newPrices: [],
+      newStores: [],
+      coverModalOpen: false,
+      coverOptions: [],
+      currentBookIndex: null,
+      currentBookTitle: '',
+
+      init() {
+        this.books = JSON.parse(localStorage.getItem('books')) || [];
+        // Inicializar arrays de inputs para preços/lojas, mantendo índice com livros
+        this.newPrices = this.books.map(() => '');
+        this.newStores = this.books.map(() => '');
+      },
+
+      save() {
+        localStorage.setItem('books', JSON.stringify(this.books));
+      },
+
+      get filteredBooks() {
+        let filtered = this.books.filter(book => {
+          const titleMatch = book.title.toLowerCase().includes(this.searchQuery.toLowerCase());
+          if (!titleMatch) return false;
+
+          if (this.filter === 'bought') return book.bought;
+          if (this.filter === 'notBought') return !book.bought;
+          return true;
+        });
+        return filtered;
+      },
+
+      addPrice(index, price, store) {
+        price = parseFloat(price);
+        if (isNaN(price) || price <= 0) return;
+        if (!store || store.trim() === '') return;
+
+        this.books[index].prices.push({ price, store });
+        this.newPrices[index] = '';
+        this.newStores[index] = '';
+        this.save();
+      },
+
+      getLowestPrice(book) {
+        if (!book.prices || book.prices.length === 0) return null;
+        return book.prices.reduce((min, current) => current.price < min.price ? current : min);
+      },
+
+      editTitle(index) {
+        const newTitle = prompt('Digite o novo título:', this.books[index].title);
+        if (newTitle && newTitle.trim() !== '') {
+          this.books[index].title = newTitle.trim();
+          this.save();
+        }
+      },
+
+      toggleBought(index) {
+        this.books[index].bought = !this.books[index].bought;
+        this.save();
+      },
+
+      deleteBook(index) {
+        if (confirm('Tem certeza que deseja excluir este livro?')) {
+          this.books.splice(index, 1);
+          this.newPrices.splice(index, 1);
+          this.newStores.splice(index, 1);
+          this.save();
+        }
+      },
+
+      openCoverModal(index) {
+        this.currentBookIndex = index;
+        this.currentBookTitle = this.books[index].title;
+        this.coverOptions = [];
+        this.coverModalOpen = true;
+
+        // Consultar API do Google Livros para capas/autores
+        const query = encodeURIComponent(this.books[index].title);
+        fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${query}&maxResults=10`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.items) {
+              this.coverOptions = data.items.map(item => {
+                return {
+                  title: item.volumeInfo.title || '',
+                  authors: item.volumeInfo.authors || [],
+                  image: item.volumeInfo.imageLinks?.thumbnail || '',
+                  thumbnail: item.volumeInfo.imageLinks?.thumbnail || '',
+                };
+              });
+            }
+          })
+          .catch(() => {
+            this.coverOptions = [];
+          });
+      },
+
+      selectCover(option) {
+        if (this.currentBookIndex !== null) {
+          this.books[this.currentBookIndex].cover = option.image;
+          if (option.authors && option.authors.length > 0) {
+            this.books[this.currentBookIndex].author = option.authors.join(', ');
+          }
+          this.save();
+        }
+        this.coverModalOpen = false;
+      }
+    };
+  }
+</script>
+
+</body>
+</html>

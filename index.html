@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR" x-data="appAdd()" x-init="loadBooks()">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Adicionar Livros</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+
+  <main class="container">
+    <h1>Adicionar Livro</h1>
+
+    <form @submit.prevent="addBook" class="form-add-book">
+      <label>
+        Título*:
+        <input type="text" x-model="newBook.title" required autofocus />
+      </label>
+
+      <label>
+        Autor:
+        <input type="text" x-model="newBook.author" />
+      </label>
+
+      <label>
+        Menor Preço*:
+        <input type="number" min="0.01" step="0.01" x-model.number="newPrice.price" required />
+      </label>
+
+      <label>
+        Loja*:
+        <input type="text" x-model="newPrice.store" required />
+      </label>
+
+      <button type="submit" :disabled="!canAdd">Adicionar Livro</button>
+    </form>
+
+  </main>
+
+  <nav class="bottom-menu">
+    <a href="index.html" class="active">Adicionar</a>
+    <a href="list.html">Lista</a>
+  </nav>
+
+  <script>
+    function appAdd() {
+      return {
+        books: [],
+        newBook: {
+          title: '',
+          author: '',
+          prices: []
+        },
+        newPrice: {
+          price: null,
+          store: ''
+        },
+        loadBooks() {
+          const saved = localStorage.getItem('books');
+          this.books = saved ? JSON.parse(saved) : [];
+        },
+        saveBooks() {
+          localStorage.setItem('books', JSON.stringify(this.books));
+        },
+        get canAdd() {
+          return this.newBook.title.trim() !== '' &&
+            this.newPrice.price > 0 &&
+            this.newPrice.store.trim() !== '';
+        },
+        addBook() {
+          // Cria um livro novo com 1 preço inicial
+          const book = {
+            id: Date.now(),
+            title: this.newBook.title.trim(),
+            author: this.newBook.author.trim() || null,
+            prices: [{ price: Number(this.newPrice.price), store: this.newPrice.store.trim() }],
+            bought: false
+          };
+          this.books.push(book);
+          this.saveBooks();
+          // limpa form
+          this.newBook.title = '';
+          this.newBook.author = '';
+          this.newPrice.price = null;
+          this.newPrice.store = '';
+          // feedback (foco no título)
+          this.$nextTick(() => this.$el.querySelector('input[type="text"]').focus());
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>
